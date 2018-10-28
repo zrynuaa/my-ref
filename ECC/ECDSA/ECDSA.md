@@ -4,7 +4,7 @@
 
 ## Signature generation algorithm
 
-> Alice creates a key pair, consisting of a private key integer {\displaystyle $d_{A}$, randomly selected in the interval ${\displaystyle [1,n-1]}$; and a public key curve point ${\displaystyle Q_{A}=d_{A}\times G}$. 
+> Alice creates a key pair, consisting of a private key integer $d_{A}$, randomly selected in the interval ${\displaystyle [1,n-1]}$; and a public key curve point ${\displaystyle Q_{A}=d_{A}\times G}$. 
 >
 > For Alice to sign a message ${\displaystyle m}$, she follows these steps:
 >
