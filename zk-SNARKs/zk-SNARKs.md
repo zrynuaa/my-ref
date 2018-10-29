@@ -9,17 +9,17 @@
 
 上述原文摘自[zkSNARKs in a Nutshell](https://chriseth.github.io/notes/articles/zksnarks/zksnarks.pdf)
 
-知识证明要求是健壮性（soundness）、完整性（completeness），健壮性是指作恶者很难证明成功，完整性是证明者有方法证明成功他有知识。零知识证明多了一个特性：零知识性（zero-knowledge），证明者在证明过程中不会向验证者透露任何的知识。
+知识证明要求是健壮性（soundness）、完整性（completeness），健壮性是指作恶者很难证明成功，完整性是证明者有方法证明成功他拥有知识。零知识证明多了一个特性：零知识性（zero-knowledge），证明者在证明过程中不会向验证者透露任何的知识。还有，zk-SNARKs是“computational soundness”的，不能抵御量子攻击。
 
 [TOC]
 
-a picture from [**Vitarlik**](https://medium.com/@VitalikButerin/quadratic-arithmetic-programs-from-zero-to-hero-f6d558cea649) 
+a picture from [**Vitalik**](https://medium.com/@VitalikButerin/quadratic-arithmetic-programs-from-zero-to-hero-f6d558cea649) 
 
 ![image-20181023113141203](img/image-20181023113141203.png)
 
 上图是Vitalik Medium上blog的一张图片，展示了zk-SNARKs的大体上的过程，过程来自[Succinct Non-Interactive Arguments via Linear Interactive Proofs](https://eprint.iacr.org/2012/718.pdf)。
 
-我们下面的介绍过程和上图不完全一样，因为到QAP之后，我们要使用The Pinocchio Protocol来进行证明和Pairing来隐藏知识。
+我们下面的介绍过程和上图不完全一样，因为到QAP之后，我们要使用The Pinocchio Protocol来进行证明和用Pairing来隐藏知识。
 
 ## Computation
 
@@ -85,7 +85,7 @@ out & = & sym\_2 + 5
 \end{equation}\\
 solution:[one，x，out，sym\_1，y，sym\_2]
 $$
-假设我们拥有知识x，经过单向函数的计算得出的结果是35，即$f(x)=x^3+x+5=35$。这个知识是$x=3$，那么对应的 **solution** 就是 [1，3，35，9，27，30] 。
+假设我们拥有知识x，经过单向函数$f(x)$的计算得出的结果是35，即$f(x)=x^3+x+5=35$。这个知识是$x=3$，那么对应的 **solution** 就是 [1，3，35，9，27，30] 。
 
 
 ## R1CS
@@ -116,7 +116,7 @@ a_1 = [0, 1, 0, 0, 0, 0]\ \ \
 b_1 = [0, 1, 0, 0, 0, 0]\ \ \
 c_1 = [0, 0, 0, 1, 0, 0]
 $$
-验证如下：s=[1，3，35，9，27，30]，下面同理
+验证如下：s=[1，3，35，9，27，30]，其他的constrain同理
 $$
 s.a_1\ *\ s.b_1\ -s.c_1 = 0
 $$
@@ -216,12 +216,10 @@ C_4(x): [4, -4.333, 1.5, -0.166]
 C_5(x): [-6, 9.5, -4, 0.5]
 C_6(x): [4, -7, 3.5, -0.5]
 ```
-分别将$x=1,2,3,4$带入可以还原出R1CS的结果向量。
+分别将$x=1,2,3,4$带入可以还原出上面R1CS的结果向量。
 > This set of polynomials (plus a Z polynomial that I will explain later) makes up the parameters for this particular QAP instance. Note that all of the work up until this point needs to be done only once for every function that you are trying to use zk-SNARKs to verify; once the QAP parameters are generated, they can be reused.
 
-上面这句话的意思是：上述多项式构成了一个特定QAP实例的参数。 在使用zk-SNARKs进行验证的每个函数时，QAP的工作只需执行一次;，生成QAP参数后，可以重复使用它们。
-
-对于每次证明，上述多项式是一样的。只是我们的知识不同，solution就会有不同的值，我们的solution要与结果（比如上述的$f(x)=35$）相对应。
+上面这句话的意思是：上述多项式构成了一个特定QAP实例的参数。 在使用zk-SNARKs进行验证的每个函数$f(x)$ 时，QAP的工作只需执行一次;，生成QAP参数后，可以重复使用它们。对于每次证明，上述多项式是一样的。只是我们的知识不同，solution就会有不同的值，我们的solution要与结果（比如上述的$f(x)=35$）相对应。
 
 ### Checking the QAP
 
@@ -248,7 +246,9 @@ A(x)\ * \ B(x)-C(x)=H(x)\ * \ Z(x)
 $$
 在给定的instance中，$Z(x)$是固定的。如果计算中有$n$个gate，那么$Z(x)=\prod_{i=1}^{n}(x-i)$，而solution向量中也会有$n$个值。求出$A(x),\ B(x),\ C(x)$后，就可以求出$H(x)$。
 
-在真正的应用上，不会在实数域上运算，而是会在有限域上进行操作，这样可以避免一系列舍入误差。但是，原理都是相同的。目前所做的事情，相对于上一步的R1CS，通过多项式的方式简化了验证的方式，QAP相对于R1CS是一个效率上的改进。现在只是说明了如何对知识进行证明，也就是完成了 **soundness** 和 **completeness** 。还没有做到零知识，还是依赖于证明者未被隐藏的向量 $s$ ，因为如果我们把$A(x),\ B(x),\ C(x)$公开出去，攻击者就反推出solution。接下来要先介绍Pairing，进而用Pairing来对知识进行保护并保证上述两个特性也能够满足。
+在真正的应用上，不会在实数域上运算，而是会在有限域上进行操作，这样可以避免一系列舍入误差。但是，原理都是相同的。目前所做的事情，相对于上一步的R1CS，通过多项式的方式简化了验证的方式，QAP相对于R1CS是一个效率上的改进。
+
+现在只是说明了如何对知识进行证明，也就是完成了 **soundness** 和 **completeness** 。还没有做到零知识，还是依赖于证明者未被隐藏的向量 $s$ ，因为如果我们把$A(x),\ B(x),\ C(x)$公开出去，攻击者就反推出solution。接下来要先介绍Pairing，进而用Pairing来对知识进行保护并保证上述两个特性也能够满足。
 
 ## Elliptic curve pairing / bilinear maps
 
@@ -274,15 +274,15 @@ $$
 
 ### 验证优化
 
-整个多项式$A(x),\ B(x),\ C(x)$ 会有成千数万个子项，所以我们需要优化一下这个验证方法。我们只需要验证在 ![x=t](https://www.zhihu.com/equation?tex=x%3Dt) 处多项式是否成立即可，即验证$A(t)*B(t)-C(t)=H(t)*Z(t)$  。当然，这里存在着一些风险，即会不会出现虽然整个多项式并不满足，但是恰好在$x=t$  也成立的情况？以及，会不会证明者精心构造数据使得其恰好在  处成 $x=t$ 立？
+整个多项式$A(x),\ B(x),\ C(x)$ 会有成千数万个子项，所以我们需要优化一下这个验证方法。我们只需要验证在 ![x=t]处多项式是否成立即可，即验证$A(t)*B(t)-C(t)=H(t)*Z(t)$  。当然，这里存在着一些风险，即会不会出现虽然整个多项式并不满足，但是恰好在$x=t$  也成立的情况？以及，会不会证明者精心构造数据使得其恰好在 $x=t$ 处成立？
 
-第一个问题用[Schwartz-Zippel](https://en.wikipedia.org/wiki/Schwartz%E2%80%93Zippel_lemma)定理来回答，即两个2d阶（最高阶是2d）多项式最多在2d个点处值相等，因此我们选一个随机值 t，由于我们所使用的有限域的阶远大于多项式的阶，因此找到另一个多项式使得这个多项式在 t 处取值和此多项式相等的概率小到可以忽略)。所以，虽然概率存在，但是足够小。
+第一个问题用[Schwartz-Zippel](https://en.wikipedia.org/wiki/Schwartz%E2%80%93Zippel_lemma)定理来回答，即两个2d阶（最高阶是2d）多项式最多在2d个点处值相等，因此我们选一个随机值 $t$，由于我们所使用的有限域的阶远大于多项式的阶，因此找到另一个多项式使得这个多项式在 t 处取值和此多项式相等的概率小到可以忽略)。所以，虽然概率存在，但是足够小。
 
-第二个问题， ![t](https://www.zhihu.com/equation?tex=t) 在Setup阶段就会销毁，因为没有人知道 ![t](https://www.zhihu.com/equation?tex=t) 究竟是多少，因此想要针对 ![x=t](https://www.zhihu.com/equation?tex=x%3Dt) 进行伪造数据是极其困难的。
+第二个问题， $t$ 在Setup阶段就会销毁，因为没有人知道 $t$ 究竟是多少，因此想要针对 $x=t$ 进行伪造数据是极其困难的。
 
 ### 简化的验证过程
 
-需要对三个方面的数据进行验证。
+完整的过程在下一节的paper中，这里将验证过程简化便于理解。总共需要对三个方面的数据进行验证。
 
 **Step1**
 
@@ -308,7 +308,7 @@ $$
 
 其中$G$是椭圆曲线的循环群的生成元，$t,\ k_a,\ k_b,\ k_c$ 称为 “toxic waste”，可信第三方在生成这些参数后必须将这些参数销，保证没人知道这些参数的值。因为椭圆曲线乘法是基于离散对数难题的，当获取到$G*k$ 时，很难恢复出k的值。
 
-证明者计算后给出：
+证明者计算给出：
 $$
 π_a =G * A(t),\ π’_a = G * A(t) * k_a\\
 π_b = G * B(t),\ π’_b = G * B(t) * k_b\\
@@ -382,7 +382,7 @@ e(π_a,\ π_b)\ ?=\ e(π_c,\ G)*e(π_h,\ vk_z)
 $$
 **验证过程小结：**
 
-* 系统在初始化阶段要根据电路计算出$A_i(x),\ B_i(x),\ C_i(x),\ Z(x)$。在合理范围内随机出 $t,\ b,\ k_a,\ k_b,\ k_c$这些“toxic waste”，这些参数在计算完PK与VK后钥销毁。接着计算存储数量巨大的PK以及VK，这两个参数是系统唯一且公开的，有数据显示这两个参数总和接近1GB的大小。
+* 系统在初始化阶段要根据电路计算出$A_i(x),\ B_i(x),\ C_i(x),\ Z(x)$。在合理范围内随机出 $t,\ b,\ k_a,\ k_b,\ k_c​$这些“toxic waste”，这些参数在计算完PK与VK后要销毁。接着计算存储数量巨大的PK以及VK，这两个参数是系统唯一且公开的，有数据显示PK接近1GB的大小。
 * 证明者在QAP中输入知识（knowledge）得到solution，solution是$A(x),\ B(x),\ C(x)$的组成多项式的系数，进一步可以求出$H(x)$。
 * 证明者结合PK，计算出proof $π := (π_a,π′_a ,π_b,π'_b ,π_c,π′_c ,π_k,π_h)$。
 * 验证者分三部分验证证明者给出的证明，全部验证通过则**以一个相对大的概率认为**证明者有相应的知识。

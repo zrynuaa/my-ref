@@ -391,7 +391,7 @@ R1CS是要证明每个Constraint都成立，而QAP的作用是将成千上万的
 
 ## Experiment
 
-Zerocash做的实验数据，pp参数容量是比较大的，Pour的过程话费时间也比较长，主要是在$Prove$的过程中钥进行很多的计算，通过计算电路将要证明的computation转化为R1CS、QAP，再通过Pairing进行同态隐藏，最后给出proof $\pi_{POUR}$。
+Zerocash做的实验数据，pp参数容量是比较大的，Pour的过程话费时间也比较长，主要是在$Prove$的过程中钥进行很多的计算，通过计算电路将要证明的computation转化为R1CS、QAP，再通过Pairing进行同态隐藏，最后给出proof $\pi_{POUR}​$。
 
 ![image-20181016160217558](images/image-20181016160217558.png)
 
