@@ -31,13 +31,15 @@ a picture from [**Vitalik**](https://medium.com/@VitalikButerin/quadratic-arithm
 
 比如，$B=SHA256(A)$ ，要证明其拥有 $A$，且 $A$ 的 $SHA256$ 哈希值为 $B$。
 
-在证明系统中有这样两个statement：Instance和Witness。
+在证明系统中有这样两个statement：Instance和Witness。在上面这个例子中，
 
 Instance表示为：$ \vec{x} = ( B )$。这些信息要公开出去。
 
 Witness表示为：$\vec{a} = (A)$。witness中都是用户的知识，是不能泄漏出去的信息。
 
 在Prove和Verify过程中要使用到这两个信息。目的是在不泄漏witness的情况下证明拥有这些知识。
+
+后文中 【Zerocash】章节列出了详细的Zerocash中的Compution、Instance和Witness的组成。
 
 ## Circuit
 
@@ -66,11 +68,12 @@ out & = & sym\_2 + 5
 \right.
 \end{equation}
 $$
+同时定义：
 $$
 solution:[one，x，out，sym\_1，y，sym\_2]
 $$
 
-假设我们拥有知识x，经过单向函数$f(x)$的计算得出的结果是35，即$f(x)=x^3+x+5=35$。这个知识是$x=3$，那么对应的 **solution** 实例化为 [1，3，35，9，27，30] 。
+假设我们拥有知识x，经过单向函数$f(x)$的计算得出的结果是35，即$f(x)=x^3+x+5=35$。拥有这个知识$x=3$，那么对应的 **solution** 就实例化为 [1，3，35，9，27，30] 。
 
 
 ## R1CS
@@ -229,7 +232,9 @@ C polynomials
 0
 ```
 
-可以看出上面的结果就是R1CS中第一个constraint对应的$a_1, b_1, c_1$的值，仍然满足$s.a_1\ *\ s.b_1=s.c_1$ ，同样的，在$x=2,3,4$ 时仍然成立。所以上述多项式是满足R1CS的结果向量$a,b,c$ 的所有要求的，即满足所有的constraint（下一小节会对这些多项式进行优化）。
+可以看出上面的结果就是R1CS中第一个constraint对应的$a_1, b_1, c_1$的值，仍然满足$s.a_1\ *\ s.b_1=s.c_1$ ，同样的，在$x=2,3,4$ 时仍然成立。
+
+所以上述多项式是满足R1CS的结果向量$a,b,c$ 的所有要求的，即满足所有的constraint（下一小节会对这些多项式进行优化）。而且$A_i(x),\ B_i(x),\ C_i(x)$ 这些多项式是可公开的。
 
 
 
@@ -251,7 +256,7 @@ A(x)=\sum_{i=1}^6s_i*A_i(x)=s.[A_1(x), A_2(x), A_3(x), A_4(x), A_5(x), A_6(x)]\\
 B(x)=\sum_{i=1}^6s_i*B_i(x)\\
 C(x)=\sum_{i=1}^6s_i*C_i(x)
 $$
-我们需要检查结果多项式$ A(x) * B(x) - C(x)$ 在 $x=1,2,3,4$ 处是否都为 $0$，若在这四个点处有一处不为 $0$，那么验证失败，否则，验证成功。相对应的，检测 $x=i$ 时多项式的值是否为0，就是检测第 $i$ 个constraint是否满足，需要同时使得所有的constraint都成立。
+我们需要检查结果多项式$ A(x) * B(x) - C(x)=0$ 在 $x=1,2,3,4$ 处是否都成立，若在这四个点处都成立，那么验证成功，否则，验证失败。相对应的，检测 $x=i$ 时多项式的值是否为0，就是检测第 $i$ 个constraint是否满足，需要同时使得所有的constraint都成立。
 
 > 注：当$x=1$ 时，检验
 >
@@ -260,6 +265,8 @@ $$
 > 等价于检验
 >
 > ​	$s.a_1\ *\ s.b_1=s.c_1$ 
+
+到目前为止仍然需要对每个constraint进行单独的检验，即需要检验很多次。下面进行优化使得只需要进行一次检验即可。
 
 
 
@@ -275,7 +282,9 @@ $$
 
 现在只是说明了如何对知识进行证明，也就是完成了 **soundness** 和 **completeness** 。还没有做到零知识，还是依赖于证明者未被隐藏的向量 $s$ ，因为如果我们把$A(x),\ B(x),\ C(x)$公开出去，攻击者就反推出solution。接下来要先介绍Pairing，进而用Pairing来对知识进行保护并保证上述两个特性也能够满足。
 
-## Elliptic curve pairing / bilinear maps
+## Homomorphic Hiding
+
+### 背景知识 Elliptic curve pairing / bilinear maps
 
 双线性映射定义了三个p（素数）阶乘法循环群$G_1$，$G_2$,和$G_T$。并且定义在这三个群上的一个映射关系$e: G_1\times G_2 \rightarrow G_T$，并且满足以下的性质：
 
@@ -286,8 +295,6 @@ $$
 如果 $G_1 = G_2$ 则称上述双线性配对是对称的，否则是非对称的。
 
 另外，上述的双线性配对是素数阶的，还存在一种合数阶的双线性配对。
-
-## Homomorphic Hiding
 
 > In the previous articles, we introduced the quadratic arithmetic program, a way of representing any computational problem with a polynomial equation that is much more amenable to various forms of mathematical trickery. We also introduced elliptic curve pairings, which allow a very limited form of one-way homomorphic encryption that lets you do equality checking.
 
@@ -307,19 +314,17 @@ $$
 
 第二个问题， $t$ 在Setup阶段就会销毁，因为没有人知道 $t$ 究竟是多少，因此想要针对 $x=t$ 进行伪造数据是极其困难的。
 
-### 简化的证明与验证过程
+### 验证
 
-* **zk-SNARKs 的 setup 阶段需要由可信第三方来完成。**
+#### 简化的证明与验证过程
 
-完整的过程在下一节的paper中，这里将验证过程简化便于理解。总共需要对三个方面的数据进行验证。
+（1）**Setup **
 
-**Step1 Check validity of knowledge commitments for A, B, C. **
+setup 阶段需要由可信第三方来完成。这个阶段会生成大量的公共参数PK（Proving key）、VK（Verification key），为了容易理解不一下子全部给出，而是在下面每一个步骤中分别说明。
 
-**(Check that the linear combinations computed over A ,B and C are in their appropriate spans)**
+（2）**Step1 Check validity of knowledge commitments for A, B, C.  (Check that the linear combinations computed over A ,B and C are in their appropriate spans)**
 
-**第一步验证证明者给出了多项式$A(x),\ B(x),\ C(x)$的系数，即知道solution。**
-
-要使用Pairing，就必须把参数映射到椭圆曲线上。在 setup 阶段，构造以下的公共参数：
+要使用Pairing，就必须把参数映射到椭圆曲线上。在 setup 阶段，构造以下的公共参数PK、VK：
 
 > **PK:**
 > $G * A_1(t),\ G * A_1(t) * k_a\\
@@ -337,7 +342,7 @@ $$
 >   vk_b = G* k_b\\
 >   vk_c = G* k_c$
 
-其中$G$是椭圆曲线的循环群的生成元，$t,\ k_a,\ k_b,\ k_c$ 称为 “toxic waste”，可信第三方在生成这些参数后必须将这些参数销毁，保证没人知道这些参数的值。因为椭圆曲线乘法是基于离散对数难题的，当获取到$G*k$ 时，很难恢复出k的值。
+其中$G$是椭圆曲线的循环群的生成元，$t,\ k_a,\ k_b,\ k_c$ 称为 “toxic waste”，可信第三方在生成这些参数后必须将这些参数销毁，保证没人知道这些参数的值。因为椭圆曲线乘法是基于离散对数难题的，当获取到$k*G$ 时，很难恢复出k的值。
 
 证明者计算给出：
 $$
@@ -357,7 +362,7 @@ e(\pi'_a,\ G)\ ?=\ e(\pi_a,\ vk_a)\\
 e(\pi'_b,\ G)\ ?=\ e(\pi_b,\ vk_b)\\
 e(\pi'_c,\ G)\ ?=\ e(\pi_c,\ vk_c)
 $$
-**Step2 Check same coefficients were used**
+（3）**Step2 Check same coefficients were used**
 
 **确保这三个线性组合都使用相同的系数。**
 
@@ -383,7 +388,7 @@ $$
 e(π_k,\ G)\ ?=\ e(π_a+π_b+π_c,\ vk_{\beta})
 $$
 
-**Step3 Check QAP divisibility**
+（4）**Step3 Check QAP divisibility**
 
 **证明$A(t) * B(t) – C(t) = H(t) * Z(t)$**
 
@@ -422,7 +427,7 @@ $$
 
 但是上述过程是不完善的～
 
-### 更完善的过程
+#### 更完善的过程
 
 > A (preprocessing) zk-SNARK for F-arithmetic circuit satisfiability is a triple of polynomial-time algorithms (G, P, V ), called key generator, prover, and verifier. The key generator G, given a security parameter λ and an F-arithmetic circuit C : $F^n × F^h → F^l$, samples a proving key **pk** and a verification key **vk**; these are the proof system’s public parameters, which need to be generated only once per
 > circuit. 
@@ -449,11 +454,11 @@ $$
   $$
   \widetilde π_a = \sum_{i=n+1}^ms_i*G*A_i(t)\\
   \widetilde π’_a = \sum_{i=n+1}^ms_i*G*A_i(t)*k_a\\
-  π_b = G * B(t)=\sum_{i=1}^ms_i*G*B_i(t)\\
-  π’_b = G * B(t) * k_b = \sum_{i=1}^ms_i*G*B_i(t)*k_b\\
-  π_c = G * C(t),\ π’_c = G * C(t) * k_c\\
-  π_k = G * (A(t) + B(t) + C(t)) * b=\sum_{i=1}^ns_i*G * (A_i(t) + B_i(t) + C_i(t)) * b\\
-  π_h =G * H(t)=\sum_{i=0}^{M-2}h_i*(G*t^i)\\
+  π_b,\ 
+  π’_b,\ 
+  π_c,\ 
+  π_k,\ 
+  π_h 
   $$
   与简化过程中的区别只在于 $\widetilde π_a$ 和 $\widetilde π_a'$ 的生成公式。
 
@@ -467,7 +472,7 @@ $$
 
   接下来进行三步验证：
 
-  * Check validity of knowledge commitments for A, B, C :
+  (1) Check validity of knowledge commitments for A, B, C :
 
   * $$
     e(\widetilde \pi'_a,\ G)\ ?=\ e(\widetilde \pi_a,\ vk_a)\\
@@ -476,26 +481,21 @@ $$
     $$
 
 
+  (2) Check same coefficients were used :
 
-
-
-
-  * Check same coefficients were used :
-
-$$
+* $$
   e(π_k,\ G)\ ?=\ e(vk_{\vec x}+\widetilde π_a+π_b+π_c,\ vk_{\beta})
-$$
-
-  * Check QAP divisibility :
-
-$$
+  $$
+  (3) Check QAP divisibility :
+* $$
   e(vk_{\vec x} + \widetilde π_a,\ π_b)\ ?=\ e(π_c,\ G)*e(π_h,\ vk_z)
-$$
+  $$
+
 
 
 以上的过程就使得能做到“ the verifier V (vk,$\vec x, π$) checks that **π is a valid proof for $\vec  x ∈ LC$** ”。
 
-###  PGHR13
+####  PGHR13
 
 下面给出的图片是[SCTV15](https://eprint.iacr.org/2013/879.pdf)中总结的[PGHR13](https://eprint.iacr.org/2013/279.pdf)的详细过程。包括选择Pairing参数、生成PK和VK、Prover以及Verifier。
 
@@ -509,7 +509,11 @@ $$
 
 ![image-20181023181755332](img/image-20181023181755332.png)
 
+
+
 ## Zerocash
+
+下面是两段[Zerocash原文](http://zerocash-project.org/media/pdf/zerocash-oakland2014.pdf)的内容：
 
 > Next, u produces a **zk-SNARK proof $π_{POUR}$** for the following NP statement, which we call $POUR$: 
 >
@@ -527,7 +531,9 @@ $$
 >
 > A resulting **pour transaction** $tx_{POUR} := (rt,sn^{old},cm^{new}_1, cm^{new}_2,π_{POUR} )$ is appended to the ledger. (As before, the transaction is rejected **if the serial number $sn$ appears in a previous transaction**.) 
 
-[Zerocash原文](http://zerocash-project.org/media/pdf/zerocash-oakland2014.pdf)中说明了要对以上五个方面进行零知识证明的构造，以上五个等式就是computation。
+文中说明了要对以上五个方面进行零知识证明的构造，以上五个等式是computation。
+
+
 
 > **The statement POUR**. Concretely, the NP statement POUR is defined as follows.
 >
