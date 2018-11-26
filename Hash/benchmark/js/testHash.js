@@ -1,3 +1,7 @@
+// 本地需安装NodeJS环境，该文档是在8.11.3版本下测试的，高版本应该也可以使用
+// 依赖包 npm install js-sha3
+// node testhash.js
+
 const crypto = require('crypto');
 const fs = require('fs');
 const sha3js = require('js-sha3');

@@ -1,3 +1,9 @@
+//本地安装GO环境
+//安装依赖库  go get golang.org/x/crypto
+//go build testhash.go
+//./testhash
+//需要将数据文件放在同级目录
+
 package main
 
 import (
