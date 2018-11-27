@@ -1,6 +1,6 @@
 # zk-SNARKs
 
-by Roy Zhang
+by Roy Zhang 
 
 
 
@@ -296,9 +296,9 @@ $$
 
 另外，上述的双线性配对是素数阶的，还存在一种合数阶的双线性配对。
 
-> In the previous articles, we introduced the quadratic arithmetic program, a way of representing any computational problem with a polynomial equation that is much more amenable to various forms of mathematical trickery. We also introduced elliptic curve pairings, which allow a very limited form of one-way homomorphic encryption that lets you do equality checking.
+### 验证优化
 
-上面QAP小结中要证明的形式是：$A(x) * B(x) - C(x) = H(x) * Z(x)$。其中：
+上面QAP得到结果最终要证明的形式是：$A(x) * B(x) - C(x) = H(x) * Z(x)$。其中：
 
 多项式 $A(X)$ 是多项式组 ${A_1(x),A_2(x),..., A_n(x)}$ 的线性组合；
 
@@ -306,7 +306,7 @@ $$
 
 多项式 $C(X)$ 是与 $A(x)$ 相同系数的多项式组 ${C_1(x),C_2(x),..., C_n(x)}$ 的线性组合。
 
-### 验证优化
+
 
 整个多项式$A(x),\ B(x),\ C(x)$ 会有成千数万个子项，所以我们需要优化一下这个验证方法。我们只需要验证在 $x=t$ （$t$ 的取值范围是）处多项式是否成立即可，即验证$A(t)*B(t)-C(t)=H(t)*Z(t)$  。当然，这里存在着一些风险，即会不会出现虽然整个多项式并不满足，但是恰好在$x=t$  也成立的情况？以及，会不会证明者精心构造数据使得其恰好在 $x=t$ 处成立？
 
@@ -320,7 +320,7 @@ $$
 
 （1）**Setup **
 
-setup 阶段需要由可信第三方来完成。这个阶段会生成大量的公共参数PK（Proving key）、VK（Verification key），为了容易理解不一下子全部给出，而是在下面每一个步骤中分别说明。
+setup 阶段需要由可信第三方来完成。这个阶段会生成大量的公共参数PK（Proving key）、VK（Verification key），为了容易理解不在这里全部给出，而是在下面每一个步骤中分别说明。
 
 （2）**Step1 Check validity of knowledge commitments for A, B, C.  (Check that the linear combinations computed over A ,B and C are in their appropriate spans)**
 
@@ -342,7 +342,7 @@ setup 阶段需要由可信第三方来完成。这个阶段会生成大量的�
 >   vk_b = G* k_b\\
 >   vk_c = G* k_c$
 
-其中$G$是椭圆曲线的循环群的生成元，$t,\ k_a,\ k_b,\ k_c$ 称为 “toxic waste”，可信第三方在生成这些参数后必须将这些参数销毁，保证没人知道这些参数的值。因为椭圆曲线乘法是基于离散对数难题的，当获取到$k*G$ 时，很难恢复出k的值。
+其中$G$是椭圆曲线的循环子群的生成元，$t,\ k_a,\ k_b,\ k_c$ 称为 “toxic waste”，可信第三方在生成这些参数后必须将这些参数销毁，保证没人知道这些参数的值。因为椭圆曲线乘法是基于离散对数难题的，当获取到$k*G$ 时，很难恢复出k的值。
 
 证明者计算给出：
 $$
@@ -351,10 +351,10 @@ $$
 π_c = G * C(t),\ \ π’_c = G * C(t) * k_c
 $$
 
-下面是$π_a$和$π'_a$的计算过程，$π_b$和$π_c$同理：
+下面是$π_a$和$π'_a$的计算过程，$π_b,\ π_b'$ 和 $π_c,\ π_c'$ 同理：
 $$
-π_a =G * A(t)=\sum_{i=1}^ms_i*G*A_i(t)\\
-π’_a = G * A(t) * k_a=\sum_{i=1}^ms_i*G*A_i(t)*k_a
+π_a =G * A(t)=G*[\sum_{i=1}^ms_i*A_i(t)]=\sum_{i=1}^ms_i*[G*A_i(t)]\\
+π’_a = G * A(t) * k_a=G*[\sum_{i=1}^ms_i*A_i(t)]*k_a=\sum_{i=1}^ms_i*[G*A_i(t)*k_a]
 $$
 验证者验证：
 $$
@@ -364,13 +364,17 @@ e(\pi'_c,\ G)\ ?=\ e(\pi_c,\ vk_c)
 $$
 （3）**Step2 Check same coefficients were used**
 
-**确保这三个线性组合都使用相同的系数。**
+**确保求 $A(t),\ B(t),\ C(t)$ 时使用的是相同的solution。**
 
 在公开参数 PK 和 VK 中添加新的值：
 
 > **PK：**
 >
-> $ G * (A_1(t) + B_1(t) + C_i(t)) * b\\ G * (A_2(t) + B_2(t) + C_2(t)) * b\\...$
+> $G * (A_1(t) + B_1(t) + C_1(t)) * b\\
+> G * (A_2(t) + B_2(t) + C_2(t)) * b\\
+> ...\\
+> G * (A_i(t) + B_i(t) + C_i(t)) * b\\
+> ...\\$
 
 > **VK:**
 >
@@ -380,7 +384,7 @@ $$
 
 证明者给出：
 $$
-π_k = G * (A(t) + B(t) + C(t)) * b=\sum_{i=1}^ms_i*G * (A_i(t) + B_i(t) + C_i(t)) * b\\
+π_k = G * (A(t) + B(t) + C(t)) * b=\sum_{i=1}^ms_i*[G * (A_i(t) + B_i(t) + C_i(t)) * b]\\
 $$
 验证者验证：
 
@@ -418,7 +422,7 @@ e(π_a,\ π_b)\ ?=\ e(π_c,\ G)*e(π_h,\ vk_z)
 $$
 **验证过程小结：**
 
-* 系统在初始化阶段要根据电路计算出$A_i(x),\ B_i(x),\ C_i(x),\ Z(x)$。在合理范围内随机出 $t,\ b,\ k_a,\ k_b,\ k_c$这些“toxic waste”，这些参数在计算完PK与VK后要销毁。接着计算存储数量巨大的PK以及VK，这两个参数是系统唯一且公开的，有数据显示PK接近1GB的大小。
+* 系统在初始化阶段要根据电路计算出$A_i(x),\ B_i(x),\ C_i(x),\ Z(x)$。在合理范围内随机出 $t,\ b,\ k_a,\ k_b,\ k_c$这些“toxic waste”，这些参数在计算完PK与VK后要销毁。接着计算存储数量很大的PK以及VK，这两个参数是系统唯一且公开的，有数据显示PK接近1GB的大小。
 * 证明者在QAP中输入知识（knowledge）得到solution，solution是$A(x),\ B(x),\ C(x)$的组成多项式的系数，进一步可以求出$H(x)$。
 * 证明者结合PK，计算出proof $π := (π_a,π′_a ,π_b,π'_b ,π_c,π′_c ,π_k,π_h)$。
 * 验证者分三部分验证证明者给出的证明，全部验证通过则**以一个相对大的概率认为**证明者有相应的知识。
@@ -429,18 +433,18 @@ $$
 
 #### 更完善的过程
 
-> A (preprocessing) zk-SNARK for F-arithmetic circuit satisfiability is a triple of polynomial-time algorithms (G, P, V ), called key generator, prover, and verifier. The key generator G, given a security parameter λ and an F-arithmetic circuit C : $F^n × F^h → F^l$, samples a proving key **pk** and a verification key **vk**; these are the proof system’s public parameters, which need to be generated only once per
+> A (preprocessing) zk-SNARK for F-arithmetic circuit satisfiability is a triple of polynomial-time algorithms (G, P, V ), called key generator, prover, and verifier. The **key generator G**, given a security parameter λ and an F-arithmetic circuit C : $F^n × F^h → F^l$, samples a proving key **pk** and a verification key **vk**; these are the proof system’s public parameters, which need to be generated only once per
 > circuit. 
 >
-> After that, anyone can use **pk** to generate non-interactive proofs for the language $LC$ , and anyone can use the **vk** to check these proofs. Namely, given pk and any $(\vec x, \vec a) ∈ RC$ (relation) , the honest prover P (pk,$ \vec x, \vec a$) produces a proof π attesting that $\vec x ∈ LC$ ; the verifier V (vk,$\vec x, π$) checks that **π is a valid proof for $\vec  x ∈ LC$** . A proof π is both a proof of knowledge, and a (statistical) zero-knowledge proof. 
+> After that, anyone can use **pk** to generate non-interactive proofs for the language $LC$ , and anyone can use the **vk** to check these proofs. Namely, given pk and any $(\vec x, \vec a) ∈ RC$ (relation) , the honest prover  **P(pk,$ \vec x, \vec a$)** produces a proof π attesting that $\vec x ∈ LC$ ; the verifier **V (vk,$\vec x, π$)** checks that **π is a valid proof for $\vec  x ∈ LC$** . A proof π is both a proof of knowledge, and a zero-knowledge proof. 
 
-需要补充这一节是因为上述给出的简化的过程中，没有将proof与公开的输入参数 $\vec x$ （instance）进行绑定。因为solution在证明时是隐藏的，只要solution本身是满足computation的，就可以验证通过。比如$f(2)=2^3+2+5=15$ 相应的solution为[1，2，15，4，8，10]，也可以在上面的三步验证中验证通过。因为上面的简化过程的验证 V(vk, π) 是没有用到 instance $\vec x$ 的。
+需要补充这一节是因为上述给出的简化的过程中，没有将proof与公开的输入参数 $\vec x$ （instance）进行绑定。因为solution在证明时是隐藏的，只要solution本身是满足computation的，就可以验证通过。比如$f(2)=2^3+2+5=15$ 对应上述R1CS中的solution为[1，2，15，4，8，10]，也可以在上面的三步验证中验证通过。因为上面的简化过程的验证 V(vk, π) 是没有用到 instance $\vec x$ 的。
 
 下面给出能够绑定公开输入的证明过程，即给出相应 instance 的 proof。
 
 * **重新构造 solution**
 
-  solution中包含了知识、电路的中间变量、常量（如，1）、输出out。输出 out 是公开的数据，就是instance中的数据。$\vec s:=QAPwit(C,\vec x,\vec a)∈F^m_r$，求solution时，$\vec x$ 是instance, $\vec a$ 是知识。
+  solution中包含了知识、电路的中间变量、常量（如，1）、输出out。输出 out 是公开的数据，就是$instance\ \vec x$ 中的数据。$\vec s:=QAPwit(C,\vec x,\vec a)∈F^m_r$，求solution时，$\vec x$ 是instance, $\vec a$ 是知识。
 
   **令 $\vec x$ 是 $\vec s$ 的前缀，即$x_i=s_i, i \in [1, n]$ ，其中 n 是$\vec x$ 的长度。$\vec s$ 的剩下部分没有特殊的要求，$\vec s$ 的长度是m。**
 
@@ -452,15 +456,19 @@ $$
 
   证明者求proof，包括：
   $$
-  \widetilde π_a = \sum_{i=n+1}^ms_i*G*A_i(t)\\
-  \widetilde π’_a = \sum_{i=n+1}^ms_i*G*A_i(t)*k_a\\
+  \widetilde π_a =\sum_{i=1}^ns_i*\mathcal{O} + \sum_{i=n+1}^ms_i*G*A_i(t) = \sum_{i=n+1}^ms_i*G*A_i(t)\\
+  \widetilde π’_a =\sum_{i=1}^ns_i*\mathcal{O} + \sum_{i=n+1}^ms_i*G*A_i(t)*k_a = \sum_{i=n+1}^ms_i*G*A_i(t)*k_a\\
+  $$
+  $$
   π_b,\ 
   π’_b,\ 
   π_c,\ 
+  π’_c,\
   π_k,\ 
-  π_h 
+  π_h
   $$
-  与简化过程中的区别只在于 $\widetilde π_a$ 和 $\widetilde π_a'$ 的生成公式。
+
+  与上述简化过程中的区别只在于 $\widetilde π_a$ 和 $\widetilde π_a'$ 的生成公式。$\mathcal{O}$ 是椭圆曲线循环子群中的单位元，任何群上的点与单位元 $\mathcal{O}$ 相加得到的还是原来的点。
 
 * **Verifier**
 
@@ -483,17 +491,26 @@ $$
 
   (2) Check same coefficients were used :
 
-* $$
-  e(π_k,\ G)\ ?=\ e(vk_{\vec x}+\widetilde π_a+π_b+π_c,\ vk_{\beta})
-  $$
-  (3) Check QAP divisibility :
-* $$
-  e(vk_{\vec x} + \widetilde π_a,\ π_b)\ ?=\ e(π_c,\ G)*e(π_h,\ vk_z)
-  $$
+  * $$
+    e(π_k,\ G)\ ?=\ e(vk_{\vec x}+\widetilde π_a+π_b+π_c,\ vk_{\beta})
+    $$
+    
 
+  (3) Check QAP divisibility :
+
+  * $$
+    e(vk_{\vec x} + \widetilde π_a,\ π_b)\ ?=\ e(π_c,\ G)*e(π_h,\ vk_z)
+    $$
 
 
 以上的过程就使得能做到“ the verifier V (vk,$\vec x, π$) checks that **π is a valid proof for $\vec  x ∈ LC$** ”。
+
+要使上述验证的等式成立，需要证明 $π_a = \widetilde π_a + vk_{\vec x}$，过程如下：
+$$
+\widetilde π_a + vk_{\vec x}=\mathcal{O} + \sum_{i=n+1}^ms_i*G*A_i(t) + \sum x_i*A_i(t)*G\\
+=\sum_{i=n+1}^ms_i*G*A_i(t) + \sum_{j=1}^n s_i*A_i(t)*G\\
+=\sum_{i=1}^ms_i*G*A_i(t)= G*A(t)=π_a
+$$
 
 ####  PGHR13
 
